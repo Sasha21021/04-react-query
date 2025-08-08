@@ -1,11 +1,14 @@
-import styles from "./ErrorMessage.module.css";
+import React from "react";
+import css from "./ErrorMessage.module.css";
+import { FaTimesCircle } from "react-icons/fa"; // Іконка ❌
 
-interface ErrorMessageProps {
-  message?: string;
-}
+const ErrorMessage: React.FC<{ message: string }> = ({ message }) => {
+  return (
+    <div className={css.wrapper}>
+      <FaTimesCircle className={css.icon} />
+      <span className={css.text}>{message}</span>
+    </div>
+  );
+};
 
-export default function ErrorMessage({
-  message = "There was an error, please try again...",
-}: ErrorMessageProps) {
-  return <p className={styles.text}>{message}</p>;
-}
+export default ErrorMessage;

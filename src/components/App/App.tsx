@@ -1,83 +1,80 @@
-import { useState } from "react";
-import styles from "./App.module.css";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { searchMovies } from "../../services/movieService";
+import type { MovieResponse } from "../../types/movie";
 import SearchBar from "../SearchBar/SearchBar";
-import searchMovies from "../../api/searchMovies";
-import { toast } from "react-hot-toast";
-import type { Movie } from "../../types/movie";
-import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
-import MovieGrid from "../MovieGrid/MovieGrid";
-import MovieModal from "../MovieModal/MovieModal";
+import ReactPaginate from "react-paginate";
+import MovieCard from "../MovieModal/MovieCard"; // ✅ імпортуємо напряму
+import css from "./App.module.css";
 
-export default function App() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+const App: React.FC = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
 
-  const handleSearch = async (newQuery: string) => {
-    const trimmedQuery = newQuery.trim();
-
-    if (!trimmedQuery) {
-      const message = "Please enter your search query.";
-      toast(message);
-      setErrorMessage(message);
-      setMovies([]);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(false);
-    setErrorMessage("");
-
-    try {
-      const results = await searchMovies(trimmedQuery);
-
-      if (results.length === 0) {
-        const message = "No movies found for your request.";
-        toast(message);
-        setErrorMessage(message);
-      }
-
-      setMovies(results);
-    } catch (err) {
-      console.error("Search error:", err);
-      setError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSelect = (movie: Movie) => {
-    setSelectedMovie(movie);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedMovie(null);
-  };
+  const { data, isLoading, isError } = useQuery<MovieResponse>({
+    queryKey: ["movies", searchTerm, page],
+    queryFn: () => searchMovies(searchTerm, page),
+    enabled: !!searchTerm,
+    placeholderData: (previousData) => previousData,
+  });
 
   return (
-    <div className={styles.app}>
-      <SearchBar onSubmit={handleSearch} />
+    <div>
+      {/* 🔝 Верхня панель */}
+      <div className={css.topBar}>
+        <p>Powered by TMDB</p>
+        <SearchBar
+          onSearch={(term) => {
+            setSearchTerm(term);
+            setPage(1);
+          }}
+        />
+      </div>
 
-      {isLoading ? (
-        <Loader />
-      ) : error ? (
-        <ErrorMessage />
-      ) : errorMessage ? (
-        <ErrorMessage message={errorMessage} />
-      ) : movies.length === 0 ? (
-        <p className={styles.noResults}>
-          No movies to show yet. Try searching!
-        </p>
-      ) : (
-        <MovieGrid movies={movies} onSelect={handleSelect} />
+      {/* 🧼 Порожня сторінка перед пошуком */}
+      {!searchTerm && (
+        <div className={css.blank}>
+          <p>Start by searching for a movie.</p>
+        </div>
       )}
 
-      {selectedMovie && (
-        <MovieModal movie={selectedMovie} onClose={handleCloseModal} />
+      {/* ⚠️ Обробка помилок */}
+      {isError && <ErrorMessage message="Something went wrong." />}
+
+      {/* ⏳ Завантаження */}
+      {isLoading && <p>Loading...</p>}
+
+      {/* ❌ Немає результатів */}
+      {data?.results.length === 0 && (
+        <ErrorMessage message="No movies found for your request." />
+      )}
+
+      {/* 🔢 Пагінація зверху */}
+      {data && data.total_pages > 1 && (
+        <ReactPaginate
+          pageCount={data.total_pages}
+          pageRangeDisplayed={5}
+          marginPagesDisplayed={1}
+          onPageChange={({ selected }) => setPage(selected + 1)}
+          forcePage={page - 1}
+          containerClassName={css.pagination}
+          activeClassName={css.active}
+          nextLabel="→"
+          previousLabel="←"
+        />
+      )}
+
+      {/* 🎬 Сітка фільмів */}
+      {data && (
+        <div className={css.grid}>
+          {data.results.map((movie) => (
+            <MovieCard key={movie.id} movie={movie} />
+          ))}
+        </div>
       )}
     </div>
   );
-}
+};
+
+export default App;
