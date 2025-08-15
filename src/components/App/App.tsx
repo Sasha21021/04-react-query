@@ -5,7 +5,8 @@ import type { MovieResponse } from "../../types/movie";
 import SearchBar from "../SearchBar/SearchBar";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import ReactPaginate from "react-paginate";
-import MovieCard from "../MovieModal/MovieCard"; // ✅ імпортуємо напряму
+import MovieGrid from "../MovieGrid/MovieGrid";
+import Loader from "../Loader/Loader";
 import css from "./App.module.css";
 
 const App: React.FC = () => {
@@ -43,7 +44,7 @@ const App: React.FC = () => {
       {isError && <ErrorMessage message="Something went wrong." />}
 
       {/* ⏳ Завантаження */}
-      {isLoading && <p>Loading...</p>}
+      {isLoading && <Loader />}
 
       {/* ❌ Немає результатів */}
       {data?.results.length === 0 && (
@@ -66,13 +67,7 @@ const App: React.FC = () => {
       )}
 
       {/* 🎬 Сітка фільмів */}
-      {data && (
-        <div className={css.grid}>
-          {data.results.map((movie) => (
-            <MovieCard key={movie.id} movie={movie} />
-          ))}
-        </div>
-      )}
+      {data && <MovieGrid movies={data.results} />}
     </div>
   );
 };
