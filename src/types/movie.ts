@@ -1,12 +1,15 @@
-export type Movie = {
+export interface Movie {
   id: number;
   title: string;
   poster_path: string | null;
-  vote_average: number; // ← додай це
-  // можливо ще: overview, release_date, genre_ids тощо
-};
+  release_date: string;
+  vote_average: number;
+  overview: string;
+}
 
 export interface MovieResponse {
+  page: number;
   results: Movie[];
   total_pages: number;
+  total_results: number;
 }

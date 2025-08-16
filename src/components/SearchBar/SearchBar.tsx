@@ -1,26 +1,32 @@
-// src/components/SearchBar/SearchBar.tsx
-import React, { useState } from "react";
+import React from "react";
+import { toast } from "react-hot-toast";
 import css from "./SearchBar.module.css";
 
 interface SearchBarProps {
-  onSearch: (query: string) => void;
+  onSubmit: (query: string) => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
-  const [input, setInput] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
+const SearchBar: React.FC<SearchBarProps> = ({ onSubmit }) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSearch(input);
+
+    const formData = new FormData(e.currentTarget);
+    const query = formData.get("query")?.toString().trim();
+
+    if (!query) {
+      toast.error("Please enter a search query");
+      return;
+    }
+
+    onSubmit(query);
   };
 
   return (
     <form onSubmit={handleSubmit} className={css.form}>
       <input
         type="text"
+        name="query" // ✅ обов’язковий для FormData
         placeholder="Search movies..."
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
         className={css.input}
       />
       <button type="submit" className={css.button}>

@@ -2,9 +2,14 @@ import React from "react";
 import type { Movie } from "../../types/movie";
 import css from "./MovieCard.module.css";
 
-const MovieCard: React.FC<{ movie: Movie }> = ({ movie }) => {
+interface MovieCardProps {
+  movie: Movie;
+  onClick?: () => void;
+}
+
+const MovieCard: React.FC<MovieCardProps> = ({ movie, onClick }) => {
   return (
-    <div className={css.card}>
+    <div className={css.card} onClick={onClick}>
       <img
         src={
           movie.poster_path

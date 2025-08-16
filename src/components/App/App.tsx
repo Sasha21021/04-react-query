@@ -1,19 +1,22 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchMovies } from "../../services/movieService";
-import type { MovieResponse } from "../../types/movie";
+import type { Movie, MovieResponse } from "../../types/movie";
 import SearchBar from "../SearchBar/SearchBar";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import ReactPaginate from "react-paginate";
 import MovieGrid from "../MovieGrid/MovieGrid";
 import Loader from "../Loader/Loader";
+import MovieModal from "../MovieModal/MovieModal";
+import { Toaster, toast } from "react-hot-toast";
 import css from "./App.module.css";
 
 const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  const { data, isLoading, isError } = useQuery<MovieResponse>({
+  const { data, isLoading, isError, isSuccess } = useQuery<MovieResponse>({
     queryKey: ["movies", searchTerm, page],
     queryFn: () => searchMovies(searchTerm, page),
     enabled: !!searchTerm,
@@ -22,11 +25,14 @@ const App: React.FC = () => {
 
   return (
     <div>
+      {/* 🔔 Toast */}
+      <Toaster position="top-right" />
+
       {/* 🔝 Верхня панель */}
       <div className={css.topBar}>
         <p>Powered by TMDB</p>
         <SearchBar
-          onSearch={(term) => {
+          onSubmit={(term) => {
             setSearchTerm(term);
             setPage(1);
           }}
@@ -47,12 +53,15 @@ const App: React.FC = () => {
       {isLoading && <Loader />}
 
       {/* ❌ Немає результатів */}
-      {data?.results.length === 0 && (
-        <ErrorMessage message="No movies found for your request." />
+      {isSuccess && data?.results.length === 0 && (
+        <>
+          <ErrorMessage message="No movies found for your request." />
+          {toast.error("No movies found")}
+        </>
       )}
 
       {/* 🔢 Пагінація зверху */}
-      {data && data.total_pages > 1 && (
+      {isSuccess && data.total_pages > 1 && (
         <ReactPaginate
           pageCount={data.total_pages}
           pageRangeDisplayed={5}
@@ -67,7 +76,20 @@ const App: React.FC = () => {
       )}
 
       {/* 🎬 Сітка фільмів */}
-      {data && <MovieGrid movies={data.results} />}
+      {isSuccess && (
+        <MovieGrid
+          movies={data.results}
+          onSelect={(movie) => setSelectedMovie(movie)}
+        />
+      )}
+
+      {/* 🪟 Модальне вікно */}
+      {selectedMovie && (
+        <MovieModal
+          movie={selectedMovie}
+          onClose={() => setSelectedMovie(null)}
+        />
+      )}
     </div>
   );
 };
