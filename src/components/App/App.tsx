@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchMovies } from "../../services/movieService";
-import type { Movie, MovieResponse } from "../../types/movie";
 import SearchBar from "../SearchBar/SearchBar";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import ReactPaginate from "react-paginate";
@@ -10,6 +9,8 @@ import Loader from "../Loader/Loader";
 import MovieModal from "../MovieModal/MovieModal";
 import { Toaster, toast } from "react-hot-toast";
 import css from "./App.module.css";
+import type { Movie } from "../../types/movie";
+import type { MovieResponse } from "../../types/movieResponse";
 
 const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,6 +24,13 @@ const App: React.FC = () => {
     placeholderData: (previousData) => previousData,
   });
 
+  // ✅ Показати toast лише один раз при порожньому результаті
+  useEffect(() => {
+    if (isSuccess && data?.results.length === 0) {
+      toast.error("No movies found");
+    }
+  }, [isSuccess, data]);
+
   return (
     <div>
       {/* 🔔 Toast */}
@@ -32,7 +40,14 @@ const App: React.FC = () => {
       <div className={css.topBar}>
         <p>Powered by TMDB</p>
         <SearchBar
-          onSubmit={(term) => {
+          action={(formData) => {
+            const term = formData.get("query")?.toString().trim();
+
+            if (!term) {
+              toast.error("Please enter a search query");
+              return;
+            }
+
             setSearchTerm(term);
             setPage(1);
           }}
@@ -54,10 +69,7 @@ const App: React.FC = () => {
 
       {/* ❌ Немає результатів */}
       {isSuccess && data?.results.length === 0 && (
-        <>
-          <ErrorMessage message="No movies found for your request." />
-          {toast.error("No movies found")}
-        </>
+        <ErrorMessage message="No movies found for your request." />
       )}
 
       {/* 🔢 Пагінація зверху */}
