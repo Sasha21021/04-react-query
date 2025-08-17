@@ -40,15 +40,8 @@ const App: React.FC = () => {
       <div className={css.topBar}>
         <p>Powered by TMDB</p>
         <SearchBar
-          action={(formData) => {
-            const term = formData.get("query")?.toString().trim();
-
-            if (!term) {
-              toast.error("Please enter a search query");
-              return;
-            }
-
-            setSearchTerm(term);
+          onSubmit={(query) => {
+            setSearchTerm(query);
             setPage(1);
           }}
         />
